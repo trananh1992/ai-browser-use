@@ -302,3 +302,5 @@ For production use cases, use our [Browser Use Cloud API](https://cloud.browser-
 </div>
 
 <div align="center"> Made with ❤️ in Zurich and San Francisco </div>
+
+https://www.facebook.com/share/v/18T2h5mFv5/
