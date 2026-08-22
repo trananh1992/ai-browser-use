@@ -106,7 +106,7 @@ class TestBaseFile:
 		"""Test file sync to disk operations."""
 		with tempfile.TemporaryDirectory() as tmp_dir:
 			tmp_path = Path(tmp_dir)
-			file_obj = MarkdownFile(name='test', content='# Test Content')
+			file_obj = MarkdownFile(name='test', content='# Test Content\nJosé')
 
 			# Test sync to disk
 			await file_obj.sync_to_disk(tmp_path)
@@ -114,7 +114,8 @@ class TestBaseFile:
 			# Verify file was created on disk
 			file_path = tmp_path / 'test.md'
 			assert file_path.exists()
-			assert file_path.read_text() == '# Test Content'
+			assert file_path.read_text(encoding='utf-8') == '# Test Content\nJosé'
+			assert file_path.read_bytes().endswith('José'.encode())
 
 			# Test write operation
 			await file_obj.write('# New Content', tmp_path)
@@ -476,6 +477,18 @@ class TestFileSystem:
 		result = await fs.append_file('invalid@name.md', 'content')
 		assert 'not found' in result
 		assert 'auto-corrected' in result
+
+	async def test_replace_file_reports_missing_text(self, temp_filesystem):
+		"""Test that replacing absent text reports an error without changing the file."""
+		fs = temp_filesystem
+		original_content = '- [ ] First task\n- [ ] Second task'
+		await fs.write_file('todo.md', original_content)
+
+		result = await fs.replace_file_str('todo.md', '- [ ] Missing task', '- [x] Missing task')
+
+		assert result == 'Error: Could not find the specified text in file todo.md.'
+		assert fs.get_file('todo.md').content == original_content
+		assert (fs.data_dir / 'todo.md').read_text(encoding='utf-8') == original_content
 
 	async def test_append_json_file(self, temp_filesystem):
 		"""Test appending content to JSON files."""
